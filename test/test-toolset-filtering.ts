@@ -179,7 +179,7 @@ describe("Toolset Filtering", () => {
       }
     });
 
-    test("excludes execute_graphql (not in any toolset)", () => {
+    test("excludes execute_graphql", () => {
       assertContainsNone(tools, ["execute_graphql"], "unassigned");
     });
   });
@@ -246,14 +246,14 @@ describe("Toolset Filtering", () => {
 
   // ---- 4. GITLAB_TOOLS (individual tools, additive) ----
 
-  describe("GITLAB_TOOLS=list_pipelines,execute_graphql", () => {
+  describe("GITLAB_TOOLS=list_pipelines,get_pipeline", () => {
     let server: ServerInstance;
     let tools: string[];
 
     before(async () => {
       const port = await nextMcpPort();
       server = await launchMcpServer(mockGitLabUrl, port, {
-        GITLAB_TOOLS: "list_pipelines,execute_graphql",
+        GITLAB_TOOLS: "list_pipelines,get_pipeline",
       });
       tools = await getToolNames(`http://${HOST}:${port}/mcp`);
     });
@@ -265,7 +265,7 @@ describe("Toolset Filtering", () => {
     });
 
     test("includes the individually added tools", () => {
-      assertContainsAll(tools, ["list_pipelines", "execute_graphql"], "individual");
+      assertContainsAll(tools, ["list_pipelines", "get_pipeline"], "individual");
     });
 
     test("does not include other pipeline tools", () => {
@@ -563,7 +563,7 @@ describe("Toolset Filtering", () => {
     before(async () => {
       const port = await nextMcpPort();
       server = await launchMcpServer(mockGitLabUrl, port, {
-        GITLAB_TOOLS: "List_Pipelines,Execute_GraphQL",
+        GITLAB_TOOLS: "List_Pipelines,Get_Pipeline",
       });
       tools = await getToolNames(`http://${HOST}:${port}/mcp`);
     });
@@ -571,7 +571,7 @@ describe("Toolset Filtering", () => {
     after(() => cleanupServers([server]));
 
     test("resolves mixed-case tool names to lowercase equivalents", () => {
-      assertContainsAll(tools, ["list_pipelines", "execute_graphql"], "case-insensitive tools");
+      assertContainsAll(tools, ["list_pipelines", "get_pipeline"], "case-insensitive tools");
     });
 
     test("returns default tools plus the two individual tools", () => {

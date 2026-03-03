@@ -478,11 +478,11 @@ export const GitLabFileContentSchema = z.object({
   size: z.number(),
   encoding: z.string(),
   content: z.string(),
-  content_sha256: z.string(), // Changed from sha to match GitLab API
-  ref: z.string(), // Added as GitLab requires branch reference
+  content_sha256: z.string().optional(), // Older GitLab versions may omit this field
+  ref: z.string().optional(), // Older GitLab versions may omit this field
   blob_id: z.string(), // Added to match GitLab API
-  commit_id: z.string(), // ID of the current file version
-  last_commit_id: z.string(), // Added to match GitLab API
+  commit_id: z.string().optional(), // ID of the current file version
+  last_commit_id: z.string().optional(), // Older GitLab versions may omit this field
   execute_filemode: z.boolean().optional(), // Added to match GitLab API
 });
 
@@ -492,7 +492,7 @@ export const GitLabDirectoryContentSchema = z.object({
   type: z.string(),
   mode: z.string(),
   id: z.string(), // Changed from sha to match GitLab API
-  web_url: z.string(), // Changed from html_url to match GitLab API
+  web_url: z.string().optional(), // Older GitLab versions may omit this field
 });
 
 export const GitLabContentSchema = z.union([
@@ -545,7 +545,7 @@ export const GitLabCommitSchema = z.object({
   committed_date: z.string(),
   created_at: z.string().optional(), // Add created_at field
   message: z.string().optional(), // Add full message field
-  web_url: z.string(), // Changed from html_url to match GitLab API
+  web_url: z.string().optional(), // Older GitLab versions may omit this field
   parent_ids: z.array(z.string()), // Changed from parents to match GitLab API
   stats: z
     .object({
@@ -2133,7 +2133,7 @@ export const GitLabProjectMemberSchema = z.object({
   web_url: z.string(),
   access_level: z.number(),
   access_level_description: z.string().optional(),
-  created_at: z.string(),
+  created_at: z.string().optional(),
   expires_at: z.string().nullable().optional(),
   email: z.string().optional(),
 });
@@ -2240,8 +2240,8 @@ export const GitLabEventSchema = z
     created_at: z.string(),
     author: GitLabEventAuthorSchema,
     author_username: z.string(),
-    imported: z.boolean(),
-    imported_from: z.string(),
+    imported: z.boolean().optional(),
+    imported_from: z.string().optional(),
   })
   .passthrough(); // Allow additional fields
 
@@ -2420,13 +2420,6 @@ export type GitLabEvent = z.infer<typeof GitLabEventSchema>;
 export type GitLabEventAuthor = z.infer<typeof GitLabEventAuthorSchema>;
 export type ListEventsOptions = z.infer<typeof ListEventsSchema>;
 export type GetProjectEventsOptions = z.infer<typeof GetProjectEventsSchema>;
-
-// GraphQL generic execution schema
-export const ExecuteGraphQLSchema = z.object({
-  query: z.string().describe("GraphQL query string"),
-  variables: z.record(z.any()).optional().describe("Variables object for the GraphQL query"),
-});
-export type ExecuteGraphQLOptions = z.infer<typeof ExecuteGraphQLSchema>;
 
 // Release schemas
 export const GitLabReleaseAssetLinkSchema = z.object({

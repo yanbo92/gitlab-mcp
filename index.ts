@@ -236,7 +236,6 @@ import {
   ListEventsSchema,
   GetProjectEventsSchema,
   GitLabEvent,
-  ExecuteGraphQLSchema,
   type GitLabRelease,
   GitLabReleaseSchema,
   ListReleasesSchema,
@@ -873,11 +872,6 @@ const allTools = [
     inputSchema: toJSONSchema(GetMergeRequestApprovalStateSchema),
   },
   {
-    name: "execute_graphql",
-    description: "Execute a GitLab GraphQL query",
-    inputSchema: zodToJsonSchema(ExecuteGraphQLSchema),
-  },
-  {
     name: "create_or_update_file",
     description: "Create or update a single file in a GitLab project",
     inputSchema: toJSONSchema(CreateOrUpdateFileSchema),
@@ -1407,7 +1401,6 @@ const allTools = [
 // Define which tools are read-only
 const readOnlyTools = new Set([
   "search_repositories",
-  "execute_graphql",
   "get_file_contents",
   "get_merge_request",
   "get_merge_request_diffs",
@@ -1776,7 +1769,7 @@ function isToolInEnabledToolset(
   enabledToolsets: ReadonlySet<ToolsetId>
 ): boolean {
   const toolsetId = TOOLSET_BY_TOOL_NAME.get(toolName);
-  // Tools not in any toolset (e.g. execute_graphql) are excluded by default
+  // Tools not in any toolset are excluded by default
   if (toolsetId === undefined) return false;
   return enabledToolsets.has(toolsetId);
 }
@@ -5895,53 +5888,6 @@ async function handleToolCall(params: any) {
     }
     logger.info(params.name);
     switch (params.name) {
-      case "execute_graphql": {
-        const args = ExecuteGraphQLSchema.parse(params.arguments);
-        const apiUrl = new URL(getEffectiveApiUrl());
-        // Build GraphQL endpoint preserving any instance subpath (e.g. /gitlab)
-        const restPath = apiUrl.pathname || ""; // e.g. /api/v4 or /gitlab/api/v4
-        const idx = restPath.lastIndexOf("/api/v4");
-        const prefix = idx >= 0 ? restPath.slice(0, idx) : "";
-        const graphqlUrl =
-          process.env.GITLAB_GRAPHQL_URL || `${apiUrl.origin}${prefix}/api/graphql`;
-
-        // Add timeout to avoid hanging requests
-        const controller = new AbortController();
-        const timeoutMs = 45000;
-        const timeout = setTimeout(() => controller.abort(), timeoutMs);
-        logger.info({ endpoint: graphqlUrl }, "execute_graphql request");
-        try {
-          const response = await fetch(graphqlUrl, {
-            ...getFetchConfig(),
-            method: "POST",
-            headers: {
-              ...BASE_HEADERS,
-              ...buildAuthHeaders(),
-            },
-            body: JSON.stringify({ query: args.query, variables: args.variables || {} }),
-            signal: controller.signal as any,
-          });
-          if (!response.ok) {
-            await handleGitLabError(response);
-          }
-          const json = await response.json();
-          return {
-            content: [{ type: "text", text: JSON.stringify(json, null, 2) }],
-          };
-        } catch (err) {
-          const message = err instanceof Error ? err.message : String(err);
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify({ error: `GraphQL request failed: ${message}` }, null, 2),
-              },
-            ],
-          };
-        } finally {
-          clearTimeout(timeout);
-        }
-      }
       case "fork_repository": {
         if (GITLAB_PROJECT_ID) {
           throw new Error("Direct project ID is set. So fork_repository is not allowed");
