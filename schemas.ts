@@ -366,8 +366,8 @@ export const GitLabNamespaceSchema = z.object({
   kind: z.enum(["user", "group"]),
   full_path: z.string(),
   parent_id: z.coerce.string().nullable(),
-  avatar_url: z.string().nullable(),
-  web_url: z.string(),
+  avatar_url: z.string().nullable().optional(),
+  web_url: z.string().optional(),
   members_count_with_descendants: z.number().optional(),
   billable_members_count: z.number().optional(),
   max_seats_used: z.number().optional(),
@@ -641,6 +641,7 @@ export const GitLabCompareResultSchema = z.object({
       author_email: z.string().optional(),
       created_at: z.string().optional(),
     })
+    .nullable()
     .optional(),
   commits: z.array(GitLabCommitSchema),
   diffs: z.array(GitLabDiffSchema),
